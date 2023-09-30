@@ -41,20 +41,7 @@ class GameType(Enum):
     AttackerVsComp = 1
     CompVsDefender = 2
     CompVsComp = 3
-
-@dataclass 
-class InventoryItem:
-    """Class for keeping track of an item in inventory."""
-    name: str
-    unit_price: float
-    quantity_on_hand: int = 0
-
-    def total_cost(self) -> float:
-        return self.unit_price * self.quantity_on_hand
-
-
         
-    
 ##############################################################################################################
 
 @dataclass(slots=True)
@@ -80,7 +67,7 @@ class Unit:
     ]
 
     def is_alive(self) -> bool:
-        """Are we alive ?"""
+        """Are we alive ? (Checks health is bigger than 0)"""
         return self.health > 0
 
     def mod_health(self, health_delta : int):
@@ -232,7 +219,7 @@ class CoordPair:
 
 @dataclass(slots=True)
 class Options:
-    """Representation of the game options."""
+    """Representation of the game options. (I think this is optional not sure)"""
     dim: int = 5
     max_depth : int | None = 4
     min_depth : int | None = 2
@@ -294,6 +281,15 @@ class Game:
     def is_empty(self, coord : Coord) -> bool:
         """Check if contents of a board cell of the game at Coord is empty (must be valid coord)."""
         return self.board[coord.row][coord.col] is None
+    
+    def in_combat(self, coord : Coord) -> bool:
+        """Check if a unit is in combat (must be valid coord)."""
+        unitSrc = self.get(coord)
+        for adjacent_coord in coord.iter_adjacent():
+            unitDst = self.get(adjacent_coord)
+            if not self.is_empty(adjacent_coord) and unitSrc.player != unitDst.player:
+                return True
+        return False
 
     def get(self, coord : Coord) -> Unit | None:
         """Get contents of a board cell of the game at Coord."""
@@ -329,11 +325,26 @@ class Game:
         """Validate a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
         if not self.is_valid_coord(coords.src) or not self.is_valid_coord(coords.dst):
             return False
-        unit = self.get(coords.src)
-        if unit is None or unit.player != self.next_player:
+
+        unitSrc = self.get(coords.src)
+        if unitSrc is None or unitSrc.player != self.next_player:
             return False
-        unit = self.get(coords.dst)
-        return (unit is None)
+        unitDst = self.get(coords.dst)
+        
+        if abs(coords.src.col - coords.dst.col) > 1:
+            return False
+        # I have to check that AI, Firewall, and Program can only move up, left or down, right (defender) 
+        if unitSrc.type.name != "Tech" and unitSrc.type.name != "Virus":
+            if unitSrc.player.name == "Attacker" and ((coords.dst.col != coords.src.col - 1) and (coords.dst.row != coords.src.row - 1)):
+                return False
+            elif unitSrc.player.name == "Defender" and ((coords.dst.col != coords.src.col + 1) and (coords.dst.row != coords.src.row + 1)):
+                return False
+            # Check if AI, Firewall and Program are engaged in combat
+            elif self.in_combat(coords.src):
+                return False
+        
+        unitSrc = None
+        return (unitDst is None)
 
     def perform_move(self, coords : CoordPair) -> Tuple[bool,str]:
         """Validate and perform a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
