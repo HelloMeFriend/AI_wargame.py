@@ -323,19 +323,19 @@ class Game:
 
     #Valid movements implemented
     def is_valid_move(self, coords : CoordPair) -> bool:
-        """Validate a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
+        """Validate a move expressed as a CoordPair. TODO """
         if not self.is_valid_coord(coords.src) or not self.is_valid_coord(coords.dst):
             return False
-
         unitSrc = self.get(coords.src)
         if unitSrc is None or unitSrc.player != self.next_player:
             return False
+        if coords.dst == coords.src:
+            return True
         unitDst = self.get(coords.dst)
-        
         if abs(coords.src.col - coords.dst.col) > 1:
             return False
         # I have to check that AI, Firewall, and Program can only move up, left or down, right (defender) 
-        if unitSrc.type.name != "Tech" and unitSrc.type.name != "Virus":
+        if unitSrc.type.name != "Tech" and unitSrc.type.name != "Virus" and coords.src != coords.dst:
             if unitSrc.player.name == "Attacker" and ((coords.dst.col != coords.src.col - 1) and (coords.dst.row != coords.src.row - 1)):
                 return False
             elif unitSrc.player.name == "Defender" and ((coords.dst.col != coords.src.col + 1) and (coords.dst.row != coords.src.row + 1)):
@@ -343,13 +343,20 @@ class Game:
             # Check if AI, Firewall and Program are engaged in combat
             elif self.in_combat(coords.src):
                 return False
-        
         unitSrc = None
         return (unitDst is None)
 
     def perform_move(self, coords : CoordPair) -> Tuple[bool,str]:
         """Validate and perform a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
         if self.is_valid_move(coords):
+            # Explosion move performance
+            if coords.dst == coords.src:
+                print("do something")
+                for adjacent_coord in coords.src.iter_range(1):
+                    unit = self.get(adjacent_coord)
+                    if unit is not None:
+                        unit.mod_health(-2)
+            #Moving and setting units around
             self.set(coords.dst,self.get(coords.src))
             self.set(coords.src,None)
             return (True,"")
