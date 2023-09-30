@@ -287,7 +287,7 @@ class Game:
         unitSrc = self.get(coord)
         for adjacent_coord in coord.iter_adjacent():
             unitDst = self.get(adjacent_coord)
-            if not self.is_empty(adjacent_coord) and unitSrc.player != unitDst.player:
+            if self.is_valid_coord(adjacent_coord) and not self.is_empty(adjacent_coord) and unitSrc.player != unitDst.player:
                 return True
         return False
 
@@ -329,36 +329,52 @@ class Game:
         unitSrc = self.get(coords.src)
         if unitSrc is None or unitSrc.player != self.next_player:
             return False
+        # Necessary implementation for explosion
         if coords.dst == coords.src:
             return True
-        unitDst = self.get(coords.dst)
+        # Make sure that targets are within an unit distance
         if abs(coords.src.col - coords.dst.col) > 1:
             return False
-        # I have to check that AI, Firewall, and Program can only move up, left or down, right (defender) 
-        if unitSrc.type.name != "Tech" and unitSrc.type.name != "Virus" and coords.src != coords.dst:
+        # Check for combat or repair, repair move is only valid if target health < 9
+        unitDst = self.get(coords.dst)
+        if unitDst is not None and unitDst.health <= 9:
+            return True
+        # to check that AI, Firewall, and Program can only move up, left | or down, right (defender) 
+        if unitSrc.type.name != "Tech" and unitSrc.type.name != "Virus":
             if unitSrc.player.name == "Attacker" and ((coords.dst.col != coords.src.col - 1) and (coords.dst.row != coords.src.row - 1)):
                 return False
             elif unitSrc.player.name == "Defender" and ((coords.dst.col != coords.src.col + 1) and (coords.dst.row != coords.src.row + 1)):
                 return False
             # Check if AI, Firewall and Program are engaged in combat
             elif self.in_combat(coords.src):
-                return False
-        unitSrc = None
-        return (unitDst is None)
+                    return False
+        return True
 
     def perform_move(self, coords : CoordPair) -> Tuple[bool,str]:
         """Validate and perform a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
+        unitSrc = self.get(coords.src)
+        unitDst = self.get(coords.dst)
         if self.is_valid_move(coords):
             # Explosion move performance
             if coords.dst == coords.src:
                 print("do something")
                 for adjacent_coord in coords.src.iter_range(1):
-                    unit = self.get(adjacent_coord)
-                    if unit is not None:
-                        unit.mod_health(-2)
-            #Moving and setting units around
-            self.set(coords.dst,self.get(coords.src))
-            self.set(coords.src,None)
+                    self.mod_health(adjacent_coord, -2)
+                self.set(coords.src,None)
+            # End of explosion code
+            # Bi-directional damage time
+            elif unitDst is not None and unitSrc.player != unitDst.player:
+                dmg = unitSrc.damage_amount(unitDst)
+                self.mod_health(coords.dst, -dmg)
+                self.mod_health(coords.src, -dmg)
+            # Repair amount, support moment
+            elif unitDst is not None and unitSrc.player == unitDst.player:
+                rpr = unitSrc.repair_amount(unitDst)
+                self.mod_health(coords.dst, rpr)
+            # Moving and setting units around
+            else:
+                self.set(coords.dst,self.get(coords.src))
+                self.set(coords.src,None)
             return (True,"")
         return (False,"invalid move")
 
@@ -475,6 +491,7 @@ class Game:
         elif self._defender_has_ai:
             return Player.Defender
 
+# I'm pretty sure everything here is to be untouched until D2 of the assignment (I hope so)
     def move_candidates(self) -> Iterable[CoordPair]:
         """Generate valid move candidates for the next player."""
         move = CoordPair()
