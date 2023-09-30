@@ -321,6 +321,7 @@ class Game:
             target.mod_health(health_delta)
             self.remove_dead(coord)
 
+    #Valid movements implemented
     def is_valid_move(self, coords : CoordPair) -> bool:
         """Validate a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
         if not self.is_valid_coord(coords.src) or not self.is_valid_coord(coords.dst):
