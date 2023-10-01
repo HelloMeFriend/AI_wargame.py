@@ -375,7 +375,7 @@ class Game:
             else:
                 self.set(coords.dst,self.get(coords.src))
                 self.set(coords.src,None)
-            return (True,"")
+            return (True,"Move executed: " + str(coords))
         return (False,"invalid move")
 
     def next_turn(self):
@@ -431,7 +431,7 @@ class Game:
             else:
                 print('Invalid coordinates! Try again.')
     
-    def human_turn(self):
+    def human_turn(self, file):
         """Human player plays a move (or get via broker)."""
         if self.options.broker is not None:
             print("Getting next move with auto-retry from game broker...")
@@ -452,6 +452,8 @@ class Game:
                 if success:
                     print(f"Player {self.next_player.name}: ",end='')
                     print(result)
+                    file.write(f"Player {self.next_player.name}: ")
+                    file.write(result) 
                     self.next_turn()
                     break
                 else:
@@ -617,20 +619,31 @@ def main():
     # create a new game
     game = Game(options=options)
 
+    #opening file
+    if options.alpha_beta == True:
+           b = "true"
+    file = open("gameTrace-" + b + ".txt", "w")
+    if game.options.game_type == GameType.AttackerVsDefender:
+        file.writelines("Game type: Attackers vs Defender")
+        file.flush()
     # the main game loop
     while True:
         print()
         print(game)
+        file.write("\n" + str(game))
+        file.flush()
         winner = game.has_winner()
         if winner is not None:
             print(f"{winner.name} wins!")
+            file.write(f"{winner.name} wins!")
+            file.flush()
             break
         if game.options.game_type == GameType.AttackerVsDefender:
-            game.human_turn()
+            game.human_turn(file)
         elif game.options.game_type == GameType.AttackerVsComp and game.next_player == Player.Attacker:
-            game.human_turn()
+            game.human_turn(file)
         elif game.options.game_type == GameType.CompVsDefender and game.next_player == Player.Defender:
-            game.human_turn()
+            game.human_turn(file)
         else:
             player = game.next_player
             move = game.computer_turn()
