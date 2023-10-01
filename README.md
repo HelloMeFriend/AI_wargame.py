@@ -1,2 +1,10 @@
 # AI_wargame.py
 AI Wargame Project
+---------------------------------------------------------
+D1 Submission : 
+- User vs user (Attacker vs Defender)
+- Validate user moves input
+- Bi-directional damage
+- Self-destruct implementation
+- Generate output file
+- Determine winner
