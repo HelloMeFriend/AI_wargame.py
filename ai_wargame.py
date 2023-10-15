@@ -360,7 +360,7 @@ class Game:
                 print("do something")
                 for adjacent_coord in coords.src.iter_range(1):
                     self.mod_health(adjacent_coord, -2)
-                self.set(coords.src,None)
+                self.mod_health(coords.src, -unitSrc.health)
             # End of explosion code
             # Bi-directional damage time
             elif unitDst is not None and unitSrc.player != unitDst.player:
@@ -485,13 +485,12 @@ class Game:
         """Check if the game is over and returns winner"""
         if self.options.max_turns is not None and self.turns_played >= self.options.max_turns:
             return Player.Defender
-        elif self._attacker_has_ai:
+        if self._attacker_has_ai:
             if self._defender_has_ai:
                 return None
             else:
                 return Player.Attacker    
-        elif self._defender_has_ai:
-            return Player.Defender
+        return Player.Defender
 
 # I'm pretty sure everything here is to be untouched until D2 of the assignment (I hope so)
     def move_candidates(self) -> Iterable[CoordPair]:
