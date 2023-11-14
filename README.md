@@ -8,3 +8,8 @@ D1 Submission :
 - Self-destruct implementation
 - Generate output file
 - Determine winner
+
+D2 submission:
+-AI modes for attacker vs comp, defender vs comp
+-Alpha beta and minimax pruning
+- e1 and e2 Heuristics
